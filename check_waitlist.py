@@ -7,8 +7,9 @@ import sys
 import os
 import smtplib
 
-username = str(os.environ['username'])
-password = str(os.environ['password'])
+# Username and password of gmail account to send notifications
+username = str(os.environ['username']) 
+password = str(os.environ['password']) 
 
 def lambda_handler(event, context):
     for course in event.keys():
@@ -47,26 +48,28 @@ def lambda_handler(event, context):
                           'Chrome/39.0.2171.95 Safari/537.36'}
     
         response = requests.get(url, headers=headers)
+        # Parse through class section's webpage to see if open-seats-count > 0
         soup = BeautifulSoup(response.text, 'html.parser')
         open_seats = soup.find(attrs={'class': 'open-seats-count'})
         open_seats = list(open_seats)
         open_seats = int(open_seats[0])
     
         if open_seats > 0:
+            # Prepare email notification
             msg_txt = 'Subject: ' + course_id + ' (section ' + section_num + ') has a spot available!'
             msg = MIMEMultipart()
             msg['Subject'] = course + ' Waitlist'
             txt = MIMEText(msg_txt)
             msg.attach(txt)
     
-            # setup the email server,
+            # Setup the email server,
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.ehlo()
             server.starttls()
             server.ehlo()
             server.login(username, password)
     
-            # send the email
+            # Send email notification
             server.sendmail(username, event[course], msg.as_string())
-            # disconnect from the server
+            # Disconnect from the server
             server.quit()
